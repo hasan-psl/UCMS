@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UCMS — Admin Dashboard</title>
+    <link rel="stylesheet" href="/assets/css/style.css" />
+  </head>
+  <body>
+    <div class="home-bg-image"></div>
+    <div class="home-bg-overlay"></div>
+    <header class="nav">
+      <div class="container nav-inner">
+        <a href="/index.html" class="brand">
+          <span class="brand-badge">
+            <img src="https://southern.ac.bd/wp-content/uploads/2024/06/logo-1.svg" alt="Southern University Bangladesh" />
+          </span>
+          <span>Southern University Bangladesh - UCMS</span>
+        </a>
+        <nav class="nav-links">
+          <a class="nav-link" href="/index.html">Home</a>
+          <a class="nav-link" href="/clubs.html">Clubs</a>
+          <a class="nav-link" href="/events.html">Events</a>
+          <a class="nav-link" href="/members.html">Members</a>
+          <a class="nav-link" href="/dashboard.html">Dashboard</a>
+          <button class="btn" onclick="UCMS.logout()">Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container stack">
+        <h2 style="margin:0;color:var(--color-secondary);">Admin Dashboard</h2>
+
+        <section class="stack">
+          <h3 style="margin:0;color:var(--color-secondary);">Clubs</h3>
+          <table class="table" id="tblClubs">
+            <thead><tr><th>Name</th><th>Description</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section class="stack">
+          <h3 style="margin:0;color:var(--color-secondary);">Events</h3>
+          <table class="table" id="tblEvents">
+            <thead><tr><th>Title</th><th>Start</th><th>Location</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section class="stack">
+          <h3 style="margin:0;color:var(--color-secondary);">Members</h3>
+          <table class="table" id="tblMembers">
+            <thead>
+              <tr>
+                <th>Member ID</th>
+                <th>Name</th>
+                <th>Student ID</th>
+                <th>Club ID</th>
+                <th>Position</th>
+                <th>Email</th>
+                <th>Contact Number</th>
+                <th>Join Date</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+      </div>
+    </main>
+
+    <script src="/assets/js/app.js"></script>
+    <script>
+      (async function init() {
+        const user = await UCMS.checkAuth();
+        if (!user) { window.location.href = '/login.html'; return; }
+
+        try {
+          const [clubs, events, members] = await Promise.all([
+            UCMS.fetchJSON('/backend/php/clubs.php'),
+            UCMS.fetchJSON('/backend/php/events.php'),
+            UCMS.fetchJSON('/backend/php/members.php'),
+          ]);
+          const ctbody = document.querySelector('#tblClubs tbody');
+          ctbody.innerHTML = (clubs.clubs || []).map(c => `<tr class="club-row" data-club-id="${c.id}" style="cursor:pointer;"><td>${c.name}</td><td>${c.description || ''}</td></tr>`).join('');
+
+          const etbody = document.querySelector('#tblEvents tbody');
+          etbody.innerHTML = (events.events || []).map(ev => `<tr class="event-row" data-event-id="${ev.id}" style="cursor:pointer;"><td>${ev.title}</td><td>${new Date(ev.start_time).toLocaleString()}</td><td>${ev.location || ''}</td></tr>`).join('');
+
+          const mtbody = document.querySelector('#tblMembers tbody');
+          mtbody.innerHTML = (members.members || []).map(m => `
+            <tr>
+              <td>${m.member_id}</td>
+              <td>${m.name}</td>
+              <td>${m.student_id}</td>
+              <td>${m.club_id}</td>
+              <td>${m.position}</td>
+              <td>${m.email ?? ''}</td>
+              <td>${m.contact_no ?? ''}</td>
+              <td>${m.join_date}</td>
+            </tr>
+          `).join('');
+        } catch (e) {
+          console.error(e);
+        }
+      })();
+    </script>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="modal-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="modal-card" role="document">
+        <button class="modal-close" aria-label="Close">×</button>
+        <div class="modal-content" id="modalContent">
+          <div class="spinner" style="margin:20px auto;"></div>
+        </div>
+      </div>
+    </div>
+  </body>
+  </html>
+
+
